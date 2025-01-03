@@ -1,12 +1,23 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
+const leadRoutes = require('./routes/leadRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const interactionRoutes = require('./routes/interactionRoutes');
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
 
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+
+app.use('/api/leads', leadRoutes);
+app.use('/api/contacts', contactRoutes);
+app.use('/api/interactions', interactionRoutes);
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
