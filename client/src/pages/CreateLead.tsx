@@ -1,9 +1,11 @@
 //@ts-nocheck
+
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Link, NavLink } from 'react-router-dom';
 
-const Home = () => {
+import Header from '../components/Header';
+
+const CreateLead = () => {
   const [formData, setFormData] = useState({
     restaurant_name: '',
     address: '',
@@ -49,29 +51,7 @@ const Home = () => {
 
   return (
     <div>
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container">
-          <Link className="navbar-brand" to="/">Lead Management System</Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav">
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/dashboard" activeClassName="active">
-                  Dashboard
-                </NavLink>
-              </li>
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/leads" activeClassName="active">
-                  Leads
-                </NavLink>
-              </li>
-              {/* Add more navigation links as needed */}
-            </ul>
-          </div>
-        </div>
-      </nav>
+      <Header />
 
       <div className="container mt-4">
         <div className="row">
@@ -149,4 +129,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default CreateLead;

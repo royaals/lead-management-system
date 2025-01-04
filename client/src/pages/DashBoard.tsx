@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Link } from 'react-router-dom';
+import Header from '../components/Header';
 
 const Dashboard = () => {
   const [leads, setLeads] = useState([]);
@@ -21,9 +21,9 @@ const Dashboard = () => {
     try {
       setLoadingMessage('Loading dashboard data...');
       const [leadsData, pendingCallsData, recentInteractionsData] = await Promise.all([
-        fetch('/api/leads').then(res => res.json()),
-        fetch('/api/interactions/pending').then(res => res.json()).catch(() => []),
-        fetch('/api/interactions/recent').then(res => res.json()).catch(() => [])
+        fetch('http://localhost:3000/api/leads').then(res => res.json()),
+        fetch('http://localhost:3000/api/interactions/pending').then(res => res.json()).catch(() => []),
+        fetch('http://localhost:3000/api/interactions/recent').then(res => res.json()).catch(() => [])
       ]);
       setLeads(leadsData);
       setPendingCalls(pendingCallsData);
@@ -39,7 +39,7 @@ const Dashboard = () => {
   const performSearch = async (term) => {
     try {
       setLoadingMessage('Searching...');
-      const response = await fetch(`/api/leads/search?query=${encodeURIComponent(term.trim())}`);
+      const response = await fetch(`http://localhost:3000/api/leads/search?query=${encodeURIComponent(term.trim())}`);
       if (!response.ok) {
         throw new Error(`Search failed: ${response.statusText}`);
       }
@@ -92,24 +92,7 @@ const Dashboard = () => {
 
   return (
     <div className="container mt-4">
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container">
-          <Link className="navbar-brand" to="/">Lead Management System</Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav">
-              <li className="nav-item">
-                <Link className="nav-link" to="/dashboard">Dashboard</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/leads">Leads</Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+      <Header />
 
       {loadingMessage && <div className="alert alert-info">{loadingMessage}</div>}
       {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}

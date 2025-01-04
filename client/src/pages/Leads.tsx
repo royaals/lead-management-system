@@ -1,9 +1,9 @@
 //@ts-nocheck
-
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Modal, Button, Form, Tab, Tabs } from 'react-bootstrap';
-import { Link, NavLink } from 'react-router-dom';
+import { Modal, Button, Form, Tab, Tabs, Badge } from 'react-bootstrap';
+
+import Header from '../components/Header';
 
 const Leads = () => {
   const [leads, setLeads] = useState([]);
@@ -12,6 +12,10 @@ const Leads = () => {
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showAddInteractionModal, setShowAddInteractionModal] = useState(false);
   const [currentLeadId, setCurrentLeadId] = useState(null);
+  const [currentLeadDetails, setCurrentLeadDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const [leadFormData, setLeadFormData] = useState({
     restaurant_name: '',
     address: '',
@@ -19,6 +23,7 @@ const Leads = () => {
     status: 'New',
     assigned_kam: ''
   });
+
   const [contactFormData, setContactFormData] = useState({
     lead_id: '',
     name: '',
@@ -26,6 +31,7 @@ const Leads = () => {
     phone_number: '',
     email: ''
   });
+
   const [interactionFormData, setInteractionFormData] = useState({
     lead_id: '',
     interaction_date: '',
@@ -39,12 +45,34 @@ const Leads = () => {
   }, []);
 
   const loadLeads = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/leads');
+      const response = await fetch('http://localhost:3000/api/leads');
+      if (!response.ok) {
+        throw new Error('Failed to fetch leads');
+      }
       const data = await response.json();
       setLeads(data);
+      setError(null);
     } catch (error) {
       console.error('Error loading leads:', error);
+      setError('Failed to load leads');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLeadDetails = async (leadId) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/leads/${leadId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch lead details');
+      }
+      const data = await response.json();
+      setCurrentLeadDetails(data);
+    } catch (error) {
+      console.error('Error loading lead details:', error);
+      alert('Error loading lead details: ' + error.message);
     }
   };
 
@@ -73,7 +101,7 @@ const Leads = () => {
   const handleLeadSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/leads', {
+      const response = await fetch('http://localhost:3000/api/leads', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,20 +109,22 @@ const Leads = () => {
         body: JSON.stringify(leadFormData),
       });
 
-      if (response.ok) {
-        alert('Lead added successfully!');
-        setLeadFormData({
-          restaurant_name: '',
-          address: '',
-          contact_number: '',
-          status: 'New',
-          assigned_kam: ''
-        });
-        setShowAddLeadModal(false);
-        loadLeads();
-      } else {
-        throw new Error('Failed to add lead');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add lead');
       }
+
+      alert('Lead added successfully!');
+      setLeadFormData({
+        restaurant_name: '',
+        address: '',
+        contact_number: '',
+        status: 'New',
+        assigned_kam: ''
+      });
+      setShowAddLeadModal(false);
+      loadLeads();
     } catch (error) {
       alert('Error adding lead: ' + error.message);
     }
@@ -103,7 +133,11 @@ const Leads = () => {
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/contacts', {
+      if (!contactFormData.lead_id) {
+        throw new Error('No lead selected');
+      }
+
+      const response = await fetch('http://localhost:3000/api/contacts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,20 +145,22 @@ const Leads = () => {
         body: JSON.stringify(contactFormData),
       });
 
-      if (response.ok) {
-        alert('Contact added successfully!');
-        setContactFormData({
-          lead_id: '',
-          name: '',
-          role: 'Owner',
-          phone_number: '',
-          email: ''
-        });
-        setShowAddContactModal(false);
-        // Reload contacts for the current lead
-      } else {
-        throw new Error('Failed to add contact');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add contact');
       }
+
+      alert('Contact added successfully!');
+      setContactFormData({
+        lead_id: '',
+        name: '',
+        role: 'Owner',
+        phone_number: '',
+        email: ''
+      });
+      setShowAddContactModal(false);
+      loadLeadDetails(currentLeadId);
     } catch (error) {
       alert('Error adding contact: ' + error.message);
     }
@@ -133,7 +169,11 @@ const Leads = () => {
   const handleInteractionSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/interactions', {
+      if (!interactionFormData.lead_id) {
+        throw new Error('No lead selected');
+      }
+
+      const response = await fetch('http://localhost:3000/api/interactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,29 +181,48 @@ const Leads = () => {
         body: JSON.stringify(interactionFormData),
       });
 
-      if (response.ok) {
-        alert('Interaction logged successfully!');
-        setInteractionFormData({
-          lead_id: '',
-          interaction_date: '',
-          interaction_type: 'Call',
-          notes: '',
-          follow_up_required: false
-        });
-        setShowAddInteractionModal(false);
-        // Reload interactions for the current lead
-      } else {
-        throw new Error('Failed to log interaction');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to log interaction');
       }
+
+      alert('Interaction logged successfully!');
+      setInteractionFormData({
+        lead_id: '',
+        interaction_date: '',
+        interaction_type: 'Call',
+        notes: '',
+        follow_up_required: false
+      });
+      setShowAddInteractionModal(false);
+      loadLeadDetails(currentLeadId);
     } catch (error) {
       alert('Error logging interaction: ' + error.message);
     }
   };
 
+  const openAddContactModal = (leadId) => {
+    setContactFormData({
+      ...contactFormData,
+      lead_id: leadId
+    });
+    setShowAddContactModal(true);
+  };
+
+  const openAddInteractionModal = (leadId) => {
+    setInteractionFormData({
+      ...interactionFormData,
+      lead_id: leadId,
+      interaction_date: new Date().toISOString().split('T')[0]
+    });
+    setShowAddInteractionModal(true);
+  };
+
   const viewLeadDetails = async (leadId) => {
     setCurrentLeadId(leadId);
+    await loadLeadDetails(leadId);
     setShowLeadDetailsModal(true);
-    // Fetch and display lead details, contacts, and interactions
   };
 
   const getStatusColor = (status) => {
@@ -175,32 +234,14 @@ const Leads = () => {
     }
   };
 
+  if (loading) return <div className="text-center mt-5">Loading...</div>;
+  if (error) return <div className="text-center mt-5 text-danger">{error}</div>;
+
   return (
     <div>
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container">
-          <Link className="navbar-brand" to="/">Lead Management System</Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav">
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/dashboard" activeClassName="active">
-                  Dashboard
-                </NavLink>
-              </li>
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/leads" activeClassName="active">
-                  Leads
-                </NavLink>
-              </li>
-              {/* Add more navigation links as needed */}
-            </ul>
-          </div>
-        </div>
-      </nav>
-
+      {/* Navigation Bar */}
+      <Header />
+      {/* Main Content */}
       <div className="container mt-4">
         <div className="row mb-4">
           <div className="col">
@@ -212,37 +253,36 @@ const Leads = () => {
                 </Button>
               </div>
               <div className="card-body">
-                <div id="leadsContainer">
-                  {leads.length === 0 ? (
-                    <p className="text-muted">No leads found.</p>
-                  ) : (
-                    leads.map(lead => (
-                      <div className="card mb-3" key={lead.id}>
-                        <div className="card-body">
-                          <div className="d-flex justify-content-between align-items-start">
-                            <div>
-                              <h5 className="card-title">{lead.restaurant_name}</h5>
-                              <p className="card-text">
-                                <strong>Address:</strong> {lead.address}<br />
-                                <strong>Contact:</strong> {lead.contact_number}<br />
-                                <strong>Status:</strong> <span className={`badge bg-${getStatusColor(lead.status)}`}>{lead.status}</span><br />
-                                <strong>KAM:</strong> {lead.assigned_kam}
-                              </p>
-                            </div>
-                            <Button variant="primary" size="sm" onClick={() => viewLeadDetails(lead.id)}>
-                              View Details
-                            </Button>
+                {leads.length === 0 ? (
+                  <p className="text-muted">No leads found.</p>
+                ) : (
+                  leads.map(lead => (
+                    <div className="card mb-3" key={lead.id}>
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-start">
+                          <div>
+                            <h5 className="card-title">{lead.restaurant_name}</h5>
+                            <p className="card-text">
+                              <strong>Address:</strong> {lead.address}<br />
+                              <strong>Contact:</strong> {lead.contact_number}<br />
+                              <strong>Status:</strong> <Badge bg={getStatusColor(lead.status)}>{lead.status}</Badge><br />
+                              <strong>KAM:</strong> {lead.assigned_kam}
+                            </p>
                           </div>
+                          <Button variant="primary" size="sm" onClick={() => viewLeadDetails(lead.id)}>
+                            View Details
+                          </Button>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
 
+        {/* Modals */}
         {/* Add Lead Modal */}
         <Modal show={showAddLeadModal} onHide={() => setShowAddLeadModal(false)}>
           <Modal.Header closeButton>
@@ -250,6 +290,7 @@ const Leads = () => {
           </Modal.Header>
           <Modal.Body>
             <Form onSubmit={handleLeadSubmit}>
+              {/* Lead form fields */}
               <Form.Group className="mb-3">
                 <Form.Label>Restaurant Name</Form.Label>
                 <Form.Control
@@ -312,27 +353,63 @@ const Leads = () => {
         {/* Lead Details Modal */}
         <Modal show={showLeadDetailsModal} onHide={() => setShowLeadDetailsModal(false)} size="lg">
           <Modal.Header closeButton>
-            <Modal.Title>Lead Details</Modal.Title>
+            <Modal.Title>
+              {currentLeadDetails?.restaurant_name || 'Lead Details'}
+            </Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Tabs defaultActiveKey="details" id="leadTabs">
               <Tab eventKey="details" title="Details">
-                {/* Lead details will be populated here */}
+                {currentLeadDetails && (
+                  <div className="mt-3">
+                    <p><strong>Address:</strong> {currentLeadDetails.address}</p>
+                    <p><strong>Contact:</strong> {currentLeadDetails.contact_number}</p>
+                    <p><strong>Status:</strong> <Badge bg={getStatusColor(currentLeadDetails.status)}>{currentLeadDetails.status}</Badge></p>
+                    <p><strong>KAM:</strong> {currentLeadDetails.assigned_kam}</p>
+                  </div>
+                )}
               </Tab>
               <Tab eventKey="contacts" title="Contacts">
-                <Button variant="primary" className="mb-3" onClick={() => setShowAddContactModal(true)}>
+                <Button 
+                  variant="primary" 
+                  className="mb-3 mt-3" 
+                  onClick={() => openAddContactModal(currentLeadId)}
+                >
                   Add Contact
                 </Button>
-                <div id="contactsList">
-                  {/* Contacts will be populated here */}
+                <div>
+                  {currentLeadDetails?.contacts?.map(contact => (
+                    <div key={contact.id} className="card mb-2">
+                      <div className="card-body">
+                        <h6>{contact.name}</h6>
+                        <p className="mb-1"><strong>Role:</strong> {contact.role}</p>
+                        <p className="mb-1"><strong>Phone:</strong> {contact.phone_number}</p>
+                        <p className="mb-1"><strong>Email:</strong> {contact.email}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </Tab>
               <Tab eventKey="interactions" title="Interactions">
-                <Button variant="primary" className="mb-3" onClick={() => setShowAddInteractionModal(true)}>
+                <Button 
+                  variant="primary" 
+                  className="mb-3 mt-3" 
+                  onClick={() => openAddInteractionModal(currentLeadId)}
+                >
                   Add Interaction
                 </Button>
-                <div id="interactionsList">
-                  {/* Interactions will be populated here */}
+                <div>
+                  {currentLeadDetails?.interactions?.map(interaction => (
+                    <div key={interaction.id} className="card mb-2">
+                      <div className="card-body">
+                        <h6>{new Date(interaction.interaction_date).toLocaleDateString()} - {interaction.interaction_type}</h6>
+                        <p className="mb-1">{interaction.notes}</p>
+                        {interaction.follow_up_required && (
+                          <Badge bg="warning" text="dark">Follow-up Required</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </Tab>
             </Tabs>
@@ -434,7 +511,7 @@ const Leads = () => {
                   required
                 />
               </Form.Group>
-              <Form.Group className="mb-3" controlId="formFollowUp">
+              <Form.Group className="mb-3">
                 <Form.Check
                   type="checkbox"
                   label="Follow-up Required"
