@@ -1,5 +1,5 @@
 //@ts-nocheck
-
+import { API_URL } from "@/lib/utils";
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -66,7 +66,7 @@ export default function CreateLeadPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
     try {
-      const response = await fetch('https://lms-production-e0c2.up.railway.app/api/leads', {
+      const response = await fetch(`${API_URL}/api/leads`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

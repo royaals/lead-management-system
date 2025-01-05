@@ -1,4 +1,4 @@
-
+import { API_URL } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -66,7 +66,7 @@ export function AddLeadDialog({ open, onOpenChange, onLeadAdded }: AddLeadDialog
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const response = await fetch('https://lms-production-e0c2.up.railway.app/api/leads', {
+      const response = await fetch(`${API_URL}/api/leads`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

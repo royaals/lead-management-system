@@ -1,5 +1,5 @@
 //@ts-nocheck
-
+import { API_URL } from "@/lib/utils";
 import React, { useState, useEffect } from 'react'
 
 import { DashboardShell } from "../components/Shell"
@@ -30,9 +30,9 @@ export default function DashboardPage() {
     try {
       setLoadingMessage('Loading dashboard data...')
       const [leadsData, pendingCallsData, recentInteractionsData] = await Promise.all([
-        fetch('https://lms-production-e0c2.up.railway.app/api/leads').then(res => res.json()),
-        fetch('https://lms-production-e0c2.up.railway.app/api/interactions/pending').then(res => res.json()).catch(() => []),
-        fetch('https://lms-production-e0c2.up.railway.app/api/interactions/recent').then(res => res.json()).catch(() => [])
+        fetch(`${API_URL}/api/leads`).then(res => res.json()).catch(() => []),
+        fetch(`${API_URL}/api/call-plans/pending`).then(res => res.json()).catch(() => []),
+        fetch(`${API_URL}/api/interactions/recent`).then(res => res.json()).catch(() => []),
       ])
       setLeads(leadsData)
       setFilteredLeads(leadsData)

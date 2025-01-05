@@ -1,6 +1,3 @@
-// routes/leadRoutes.js
-
-
 /**
  * @swagger
  * /api/leads:
@@ -25,7 +22,7 @@
  *                 $ref: '#/components/schemas/Lead'
  *       500:
  *         $ref: '#/components/responses/ValidationError'
- * 
+ *
  *   post:
  *     tags: [Leads]
  *     summary: Create a new lead
@@ -45,7 +42,7 @@
  *               $ref: '#/components/schemas/Lead'
  *       400:
  *         $ref: '#/components/responses/ValidationError'
- * 
+ *
  * /api/leads/{id}:
  *   get:
  *     tags: [Leads]
@@ -66,7 +63,7 @@
  *               $ref: '#/components/schemas/Lead'
  *       404:
  *         $ref: '#/components/responses/NotFound'
- * 
+ *
  *   put:
  *     tags: [Leads]
  *     summary: Update lead
@@ -88,7 +85,7 @@
  *         description: Lead updated successfully
  *       404:
  *         $ref: '#/components/responses/NotFound'
- * 
+ *
  *   delete:
  *     tags: [Leads]
  *     summary: Delete lead
@@ -105,39 +102,41 @@
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import express from "express";
+import { PrismaClient } from "@prisma/client";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Utility function to validate status
 const validateStatus = (status) => {
-  const VALID_STATUSES = ['NEW', 'ACTIVE', 'INACTIVE'];
-  if (!status) return 'NEW';
+  const VALID_STATUSES = ["NEW", "ACTIVE", "INACTIVE"];
+  if (!status) return "NEW";
   const normalizedStatus = status.toUpperCase();
   if (!VALID_STATUSES.includes(normalizedStatus)) {
-    throw new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
+    throw new Error(
+      `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}`
+    );
   }
   return normalizedStatus;
 };
 
-// Get all leads with optional search
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { search } = req.query;
-    
+
     const leads = await prisma.lead.findMany({
-      where: search ? {
-        OR: [
-          { restaurant_name: { contains: search, mode: 'insensitive' } },
-          { address: { contains: search, mode: 'insensitive' } },
-          { contact_number: { contains: search, mode: 'insensitive' } },
-          { assigned_kam: { contains: search, mode: 'insensitive' } },
-        ],
-      } : undefined,
+      where: search
+        ? {
+            OR: [
+              { restaurant_name: { contains: search, mode: "insensitive" } },
+              { address: { contains: search, mode: "insensitive" } },
+              { contact_number: { contains: search, mode: "insensitive" } },
+              { assigned_kam: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : undefined,
       orderBy: {
-        created_at: 'desc',
+        created_at: "desc",
       },
       include: {
         _count: {
@@ -148,16 +147,15 @@ router.get('/', async (req, res) => {
         },
       },
     });
-    
+
     res.json(leads);
   } catch (error) {
-    console.error('Error fetching leads:', error);
-    res.status(500).json({ error: 'Failed to fetch leads' });
+    console.error("Error fetching leads:", error);
+    res.status(500).json({ error: "Failed to fetch leads" });
   }
 });
 
-// Search leads
-router.get('/search', async (req, res) => {
+router.get("/search", async (req, res) => {
   try {
     const { query } = req.query;
 
@@ -168,10 +166,10 @@ router.get('/search', async (req, res) => {
     const leads = await prisma.lead.findMany({
       where: {
         OR: [
-          { restaurant_name: { contains: query, mode: 'insensitive' } },
-          { address: { contains: query, mode: 'insensitive' } },
-          { contact_number: { contains: query, mode: 'insensitive' } },
-          { assigned_kam: { contains: query, mode: 'insensitive' } },
+          { restaurant_name: { contains: query, mode: "insensitive" } },
+          { address: { contains: query, mode: "insensitive" } },
+          { contact_number: { contains: query, mode: "insensitive" } },
+          { assigned_kam: { contains: query, mode: "insensitive" } },
         ],
       },
       include: {
@@ -183,62 +181,59 @@ router.get('/search', async (req, res) => {
         },
         interactions: {
           orderBy: {
-            created_at: 'desc',
+            created_at: "desc",
           },
           take: 1,
         },
       },
       orderBy: {
-        created_at: 'desc',
+        created_at: "desc",
       },
     });
 
     res.json(leads);
   } catch (error) {
-    console.error('Error searching leads:', error);
-    res.status(500).json({ error: 'Failed to search leads' });
+    console.error("Error searching leads:", error);
+    res.status(500).json({ error: "Failed to search leads" });
   }
 });
 
-// Get single lead by ID with related data
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const leadId = parseInt(req.params.id);
-    
+
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
       include: {
         contacts: true,
         interactions: {
           orderBy: {
-            created_at: 'desc',
+            created_at: "desc",
           },
         },
       },
     });
 
     if (!lead) {
-      return res.status(404).json({ error: 'Lead not found' });
+      return res.status(404).json({ error: "Lead not found" });
     }
 
     res.json(lead);
   } catch (error) {
-    console.error('Error fetching lead details:', error);
-    res.status(500).json({ error: 'Failed to fetch lead details' });
+    console.error("Error fetching lead details:", error);
+    res.status(500).json({ error: "Failed to fetch lead details" });
   }
 });
 
-// Create a new lead
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const { restaurant_name, address, contact_number, status, assigned_kam } = req.body;
+    const { restaurant_name, address, contact_number, status, assigned_kam } =
+      req.body;
 
-    // Validate required fields
     if (!restaurant_name) {
-      return res.status(400).json({ error: 'Restaurant name is required' });
+      return res.status(400).json({ error: "Restaurant name is required" });
     }
 
-    // Validate status
     let validatedStatus;
     try {
       validatedStatus = validateStatus(status);
@@ -258,26 +253,24 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(newLead);
   } catch (error) {
-    console.error('Error creating lead:', error);
-    res.status(500).json({ 
-      error: 'Failed to create lead',
-      details: error.message 
+    console.error("Error creating lead:", error);
+    res.status(500).json({
+      error: "Failed to create lead",
+      details: error.message,
     });
   }
 });
 
-// Update a lead
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const leadId = parseInt(req.params.id);
-    const { restaurant_name, address, contact_number, status, assigned_kam } = req.body;
+    const { restaurant_name, address, contact_number, status, assigned_kam } =
+      req.body;
 
-    // Validate required fields
     if (!restaurant_name) {
-      return res.status(400).json({ error: 'Restaurant name is required' });
+      return res.status(400).json({ error: "Restaurant name is required" });
     }
 
-    // Validate status
     let validatedStatus;
     try {
       validatedStatus = validateStatus(status);
@@ -298,30 +291,29 @@ router.put('/:id', async (req, res) => {
 
     res.json(updatedLead);
   } catch (error) {
-    console.error('Error updating lead:', error);
-    if (error.code === 'P2025') {
-      return res.status(404).json({ error: 'Lead not found' });
+    console.error("Error updating lead:", error);
+    if (error.code === "P2025") {
+      return res.status(404).json({ error: "Lead not found" });
     }
-    res.status(500).json({ error: 'Failed to update lead' });
+    res.status(500).json({ error: "Failed to update lead" });
   }
 });
 
-// Delete a lead
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const leadId = parseInt(req.params.id);
-    
+
     await prisma.lead.delete({
       where: { id: leadId },
     });
 
-    res.json({ message: 'Lead deleted successfully' });
+    res.json({ message: "Lead deleted successfully" });
   } catch (error) {
-    console.error('Error deleting lead:', error);
-    if (error.code === 'P2025') {
-      return res.status(404).json({ error: 'Lead not found' });
+    console.error("Error deleting lead:", error);
+    if (error.code === "P2025") {
+      return res.status(404).json({ error: "Lead not found" });
     }
-    res.status(500).json({ error: 'Failed to delete lead' });
+    res.status(500).json({ error: "Failed to delete lead" });
   }
 });
 

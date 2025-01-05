@@ -1,4 +1,4 @@
-
+import { API_URL } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -61,7 +61,7 @@ export function AddInteractionDialog({ open, onOpenChange, leadId, onInteraction
     if (!leadId) return
 
     try {
-      const response = await fetch('https://lms-production-e0c2.up.railway.app/api/interactions', {
+      const response = await fetch(`${API_URL}/api/interactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,4 +1,4 @@
-// routes/interactionRoutes.js
+
 
 
 /**
@@ -53,7 +53,7 @@ import { PrismaClient } from '@prisma/client';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Get pending calls
+
 router.get('/pending', async (req, res) => {
     try {
         const { leads } = req.query;
@@ -91,7 +91,7 @@ router.get('/pending', async (req, res) => {
     }
 });
 
-// Get recent interactions
+
 router.get('/recent', async (req, res) => {
     try {
         const { leads } = req.query;
@@ -122,7 +122,7 @@ router.get('/recent', async (req, res) => {
     }
 });
 
-// Get all interactions for a lead
+
 router.get('/lead/:leadId', async (req, res) => {
     try {
         const leadId = parseInt(req.params.leadId);
@@ -150,19 +150,19 @@ router.get('/lead/:leadId', async (req, res) => {
     }
 });
 
-// Add a new interaction
+
 router.post('/', async (req, res) => {
     try {
         const { lead_id, interaction_date, interaction_type, notes, follow_up_required } = req.body;
 
-        // Validate required fields
+        
         if (!lead_id || !interaction_date || !interaction_type) {
             return res.status(400).json({ 
                 error: 'lead_id, interaction_date, and interaction_type are required' 
             });
         }
 
-        // Validate interaction type
+      
         const validInteractionTypes = ['CALL', 'VISIT', 'ORDER'];
         const normalizedType = interaction_type.toUpperCase();
         if (!validInteractionTypes.includes(normalizedType)) {
@@ -198,13 +198,13 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Update an interaction
+
 router.put('/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const { interaction_date, interaction_type, notes, follow_up_required } = req.body;
 
-        // Validate interaction type if provided
+      
         if (interaction_type) {
             const validInteractionTypes = ['CALL', 'VISIT', 'ORDER'];
             const normalizedType = interaction_type.toUpperCase();
@@ -242,7 +242,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete an interaction
+
 router.delete('/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);

@@ -1,4 +1,4 @@
-// routes/contactRoutes.js
+
 
 
 /**
@@ -46,7 +46,7 @@ import { PrismaClient } from '@prisma/client';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Get all contacts for a lead
+
 router.get('/lead/:leadId', async (req, res) => {
   try {
     const contacts = await prisma.contact.findMany({
@@ -64,12 +64,12 @@ router.get('/lead/:leadId', async (req, res) => {
   }
 });
 
-// Add a new contact
+
 router.post('/', async (req, res) => {
   try {
     const { lead_id, name, role, phone_number, email } = req.body;
 
-    // Validate required fields
+   
     if (!lead_id || !name) {
       return res.status(400).json({ 
         error: 'Lead ID and name are required' 

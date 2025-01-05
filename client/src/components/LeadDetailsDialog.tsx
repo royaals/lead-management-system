@@ -1,3 +1,4 @@
+import { API_URL } from "@/lib/utils";
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import {
@@ -34,7 +35,7 @@ export function LeadDetailsDialog({ open, onOpenChange, leadId, onAddContact, on
   const loadLeadDetails = async (id: string) => {
     
     try {
-      const response = await fetch(`https://lms-production-e0c2.up.railway.app/api/leads/${id}`)
+      const response = await fetch(`${API_URL}/api/leads/${id}`)
       if (!response.ok) {
         throw new Error('Failed to fetch lead details')
       }
