@@ -44,9 +44,6 @@ The KAM Lead Management System is a comprehensive web-based platform designed fo
 - npm or yarn
 - Git
 
-# Docker PostgreSQL Setup
-
-This guide provides instructions to set up a PostgreSQL database using Docker.
 
 ## Prerequisites
 
