@@ -77,7 +77,7 @@ export default function DashboardPage() {
 
           <div className="space-y-6">
             <LeadSearch onSearch={handleSearch} />
-            <StatsCards leads={filteredLeads} />
+            
             
             <div className="grid gap-6 lg:grid-cols-7">
               <LeadsList 

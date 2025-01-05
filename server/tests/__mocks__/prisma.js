@@ -1,4 +1,4 @@
-// tests/__mocks__/prisma.js
+
 export const mockPrisma = {
     lead: {
       findMany: jest.fn(),

@@ -11,7 +11,7 @@ datasource db {
 
 model Lead {
   id             Int           @id @default(autoincrement())
-  restaurant_name String       // Changed to snake_case for PostgreSQL convention
+  restaurant_name String       
   address        String?
   contact_number String?
   status         LeadStatus    @default(NEW)

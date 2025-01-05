@@ -7,12 +7,15 @@ The KAM Lead Management System is a comprehensive web-based platform designed fo
 ## Features
 
 ### Core Functionality
+
 - **Lead Management**
+
   - Create and track restaurant leads
   - Update lead status (NEW, ACTIVE, INACTIVE)
   - Assign leads to KAMs
 
 - **Contact Management**
+
   - Store multiple contact points per lead
   - Track contact details and roles
   - Contact history maintenance
@@ -23,20 +26,23 @@ The KAM Lead Management System is a comprehensive web-based platform designed fo
   - Track interaction outcomes
 
 ## Assignment Questions Answers
-[System Design & Data modelling Answers](https://docs.google.com/document/d/1UJpG_Kz0ZD4fYY7OXEwDWM5V-kHTsdBQdr68xeVIOvI/edit?usp=sharing)  
+
+[System Design & Data modelling Answers](https://docs.google.com/document/d/1UJpG_Kz0ZD4fYY7OXEwDWM5V-kHTsdBQdr68xeVIOvI/edit?usp=sharing)
 
 ## Hosted Link
 
-You can access the live application at [keyleadmanager.devprojects.world](https://keyleadmanager.devprojects.world).  
+You can access the live application at [keyleadmanager.devprojects.world](https://keyleadmanager.devprojects.world).
 
 ## Tech Stack
 
 ### Frontend
+
 - React.js (v18)
 - Tailwind CSS
 - ShadCN
 
 ### Backend
+
 - Node.js
 - Express.js
 - Prisma ORM
@@ -55,17 +61,17 @@ You can access the live application at [keyleadmanager.devprojects.world](https:
 ## Database Setup
 
 1. **Pull the PostgreSQL Docker Image**
-   
+
    Run the following command to download the PostgreSQL Docker image:
-   
+
    ```bash
    docker pull postgres
    ```
 
 2. **Run a PostgreSQL Container**
-   
+
    Use the following command to create and start a PostgreSQL container:
-   
+
    ```bash
    docker run --name postgres-container \
      -e POSTGRES_USER=myuser \
@@ -78,6 +84,7 @@ You can access the live application at [keyleadmanager.devprojects.world](https:
 ### Installation
 
 #### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/royaals/lead-management-system.git
 
@@ -104,7 +111,8 @@ npm start
 ```
 
 #### 2. Frontend setup
-```bash 
+
+```bash
 
 # Navigate to frontend directory
 cd client
@@ -120,11 +128,17 @@ VITE_REACT_APP_BACKEND_URL="http://localhost:3000"
 # run the development server
 npm run dev
 ```
+
 ### Testing
+
 ```bash
+cd server
+
 npm test
 ```
+
 ### API Documentation
+
 The API documentation is available at `http://localhost:3000/api-docs` after starting the application. It includes detailed information about each endpoint, request parameters, and response formats.
 
 ## Sample Usage Examples
@@ -132,6 +146,7 @@ The API documentation is available at `http://localhost:3000/api-docs` after sta
 ### 1. **Add a New Lead**
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:3000/api/leads" \
 -H "Authorization: Bearer your_jwt_token" \
@@ -142,14 +157,17 @@ curl -X POST "http://localhost:3000/api/leads" \
     "phone": "Phone Number",
     "email": "email@example.com"
 }'
- ```
+```
+
 ### 2. **Retrieve All Leads**
 
 **Request**:
+
 ```bash
 curl -X GET "http://localhost:3000/api/leads" \
 -H "Authorization: Bearer your_jwt_token"
- ```
+```
+
 ### 3. **Add a Point of Contact (POC)**
 
 ```bash
@@ -162,13 +180,17 @@ curl -X POST "http://localhost:3000/api/leads/1/pocs" \
     "phone": "POC Phone",
     "email": "poc@example.com"
 }'
- ```
+```
+
 ### 4. **4. Retrieve All Points of Contact (POC)**
+
 ```bash
 curl -X GET "http://localhost:3000/api/leads/1/pocs" \
 -H "Authorization: Bearer your_jwt_token"
 ```
+
 ### 5. **Add a Call Plan for a Lead**
+
 ```bash
 curl -X POST "http://localhost:3000/api/call-plans" \
 -H "Authorization: Bearer your_jwt_token" \
@@ -180,12 +202,16 @@ curl -X POST "http://localhost:3000/api/call-plans" \
     "time": "10:00:00"
 }'
 ```
+
 ### 6. **Retrieve Call Plans for a Lead**
+
 ```bash
 curl -X GET "http://localhost:3000/api/call-plans/1" \
 -H "Authorization: Bearer your_jwt_token"
 ```
+
 ### 7. **Update a Call Plan**
+
 ```bash
 curl -X PUT "http://localhost:3000/api/call-plans/1" \
 -H "Authorization: Bearer your_jwt_token" \
@@ -197,9 +223,10 @@ curl -X PUT "http://localhost:3000/api/call-plans/1" \
     "time": "14:00:00"
 }'
 ```
+
 ### 8. **Delete a Call Plan**
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/call-plans/1" \
 -H "Authorization: Bearer your_jwt_token"
 ```
-
