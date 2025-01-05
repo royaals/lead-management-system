@@ -30,9 +30,9 @@ export default function DashboardPage() {
     try {
       setLoadingMessage('Loading dashboard data...')
       const [leadsData, pendingCallsData, recentInteractionsData] = await Promise.all([
-        fetch('http://localhost:3000/api/leads').then(res => res.json()),
-        fetch('http://localhost:3000/api/interactions/pending').then(res => res.json()).catch(() => []),
-        fetch('http://localhost:3000/api/interactions/recent').then(res => res.json()).catch(() => [])
+        fetch('https://lms-production-e0c2.up.railway.app/api/leads').then(res => res.json()),
+        fetch('https://lms-production-e0c2.up.railway.app/api/interactions/pending').then(res => res.json()).catch(() => []),
+        fetch('https://lms-production-e0c2.up.railway.app/api/interactions/recent').then(res => res.json()).catch(() => [])
       ])
       setLeads(leadsData)
       setFilteredLeads(leadsData)

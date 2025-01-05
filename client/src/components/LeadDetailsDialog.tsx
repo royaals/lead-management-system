@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,7 +23,7 @@ interface LeadDetailsDialogProps {
 
 export function LeadDetailsDialog({ open, onOpenChange, leadId, onAddContact, onAddInteraction }: LeadDetailsDialogProps) {
   const [lead, setLead] = useState<Lead | null>(null)
-  const [loading, setLoading] = useState(false)
+
 
   useEffect(() => {
     if (leadId) {
@@ -32,9 +32,9 @@ export function LeadDetailsDialog({ open, onOpenChange, leadId, onAddContact, on
   }, [leadId])
 
   const loadLeadDetails = async (id: string) => {
-    setLoading(true)
+    
     try {
-      const response = await fetch(`http://localhost:3000/api/leads/${id}`)
+      const response = await fetch(`https://lms-production-e0c2.up.railway.app/api/leads/${id}`)
       if (!response.ok) {
         throw new Error('Failed to fetch lead details')
       }
@@ -43,9 +43,7 @@ export function LeadDetailsDialog({ open, onOpenChange, leadId, onAddContact, on
     } catch (error) {
       console.error('Error loading lead details:', error)
       // You might want to show an error message to the user here
-    } finally {
-      setLoading(false)
-    }
+    } 
   }
 
   const getStatusColor = (status: string) => {

@@ -51,7 +51,7 @@ export default function LeadsPage() {
   const loadLeads = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:3000/api/leads')
+      const response = await fetch('https://lms-production-e0c2.up.railway.app/api/leads')
       if (!response.ok) {
         throw new Error('Failed to fetch leads')
       }

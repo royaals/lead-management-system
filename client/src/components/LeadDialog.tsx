@@ -66,7 +66,7 @@ export function AddLeadDialog({ open, onOpenChange, onLeadAdded }: AddLeadDialog
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const response = await fetch('http://localhost:3000/api/leads', {
+      const response = await fetch('https://lms-production-e0c2.up.railway.app/api/leads', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

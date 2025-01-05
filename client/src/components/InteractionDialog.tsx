@@ -61,7 +61,7 @@ export function AddInteractionDialog({ open, onOpenChange, leadId, onInteraction
     if (!leadId) return
 
     try {
-      const response = await fetch('http://localhost:3000/api/interactions', {
+      const response = await fetch('https://lms-production-e0c2.up.railway.app/api/interactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

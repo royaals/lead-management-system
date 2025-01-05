@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -67,7 +67,7 @@ export function AddContactDialog({ open, onOpenChange, leadId, onContactAdded }:
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/contacts', {
+      const response = await fetch('https://lms-production-e0c2.up.railway.app/api/contacts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export function AddContactDialog({ open, onOpenChange, leadId, onContactAdded }:
         throw new Error(errorData.error || 'Failed to add contact');
       }
 
-      const data = await response.json();
+     
       toast.success('Contact added successfully');
       onContactAdded();
       onOpenChange(false);
