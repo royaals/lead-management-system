@@ -44,6 +44,37 @@ The KAM Lead Management System is a comprehensive web-based platform designed fo
 - npm or yarn
 - Git
 
+# Docker PostgreSQL Setup
+
+This guide provides instructions to set up a PostgreSQL database using Docker.
+
+## Prerequisites
+
+- Docker installed on your system.
+
+## Steps to Run PostgreSQL with Docker
+
+1. **Pull the PostgreSQL Docker Image**
+   
+   Run the following command to download the PostgreSQL Docker image:
+   
+   ```bash
+   docker pull postgres
+   ```
+
+2. **Run a PostgreSQL Container**
+   
+   Use the following command to create and start a PostgreSQL container:
+   
+   ```bash
+   docker run --name postgres-container \
+     -e POSTGRES_USER=myuser \
+     -e POSTGRES_PASSWORD=mypassword \
+     -e POSTGRES_DB=mydatabase \
+     -p 5432:5432 \
+     -d postgres
+   ```
+
 ### Installation
 
 #### 1. Clone the Repository
@@ -61,7 +92,8 @@ npm install
 cp .env.example .env
 
 # Configure environment variables
-DATABASE_URL="postgresql://username:password@localhost:5432/kam_db"
+DATABASE_URL="DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/mydatabase"
+"
 
 # Run migrations
 npx prisma migrate dev
