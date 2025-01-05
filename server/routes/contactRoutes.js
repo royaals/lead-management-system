@@ -1,4 +1,45 @@
 // routes/contactRoutes.js
+
+
+/**
+ * @swagger
+ * /api/contacts/lead/{leadId}:
+ *   get:
+ *     tags: [Contacts]
+ *     summary: Get contacts for a lead
+ *     parameters:
+ *       - in: path
+ *         name: leadId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Lead ID
+ *     responses:
+ *       200:
+ *         description: List of contacts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Contact'
+ * 
+ * /api/contacts:
+ *   post:
+ *     tags: [Contacts]
+ *     summary: Create new contact
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Contact'
+ *     responses:
+ *       201:
+ *         description: Contact created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 

@@ -1,4 +1,52 @@
 // routes/interactionRoutes.js
+
+
+/**
+ * @swagger
+ * /api/interactions/pending:
+ *   get:
+ *     tags: [Interactions]
+ *     summary: Get pending interactions
+ *     parameters:
+ *       - in: query
+ *         name: leads
+ *         schema:
+ *           type: string
+ *         description: Comma-separated list of lead IDs
+ *     responses:
+ *       200:
+ *         description: List of pending interactions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Interaction'
+ * 
+ * /api/interactions/recent:
+ *   get:
+ *     tags: [Interactions]
+ *     summary: Get recent interactions
+ *     responses:
+ *       200:
+ *         description: List of recent interactions
+ * 
+ * /api/interactions:
+ *   post:
+ *     tags: [Interactions]
+ *     summary: Create new interaction
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Interaction'
+ *     responses:
+ *       201:
+ *         description: Interaction created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 

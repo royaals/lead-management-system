@@ -1,4 +1,110 @@
 // routes/leadRoutes.js
+
+
+/**
+ * @swagger
+ * /api/leads:
+ *   get:
+ *     tags: [Leads]
+ *     summary: Get all leads
+ *     description: Retrieve a list of all leads with optional search functionality
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for filtering leads
+ *     responses:
+ *       200:
+ *         description: List of leads
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Lead'
+ *       500:
+ *         $ref: '#/components/responses/ValidationError'
+ * 
+ *   post:
+ *     tags: [Leads]
+ *     summary: Create a new lead
+ *     description: Add a new lead to the system
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Lead'
+ *     responses:
+ *       201:
+ *         description: Lead created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Lead'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ * 
+ * /api/leads/{id}:
+ *   get:
+ *     tags: [Leads]
+ *     summary: Get lead by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Lead ID
+ *     responses:
+ *       200:
+ *         description: Lead details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Lead'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ * 
+ *   put:
+ *     tags: [Leads]
+ *     summary: Update lead
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Lead ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Lead'
+ *     responses:
+ *       200:
+ *         description: Lead updated successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ * 
+ *   delete:
+ *     tags: [Leads]
+ *     summary: Delete lead
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Lead ID
+ *     responses:
+ *       200:
+ *         description: Lead deleted successfully
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 
