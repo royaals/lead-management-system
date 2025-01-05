@@ -93,8 +93,8 @@ npm install
 cp .env.example .env
 
 # Configure environment variables
-DATABASE_URL="DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/mydatabase"
-"
+DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/mydatabase"
+
 
 # Run migrations
 npx prisma migrate dev
