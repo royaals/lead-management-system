@@ -22,6 +22,10 @@ The KAM Lead Management System is a comprehensive web-based platform designed fo
   - Schedule follow-ups
   - Track interaction outcomes
 
+## Hosted Link
+
+You can access the live application at [keyleadmanager.devprojects.world](https://keyleadmanager.devprojects.world).  
+
 ## Tech Stack
 
 ### Frontend
@@ -43,13 +47,9 @@ The KAM Lead Management System is a comprehensive web-based platform designed fo
 - PostgreSQL (v13 or higher)
 - npm or yarn
 - Git
+- Docker (optional)
 
-
-## Prerequisites
-
-- Docker installed on your system.
-
-## Steps to Run PostgreSQL with Docker
+## Database Setup
 
 1. **Pull the PostgreSQL Docker Image**
    
@@ -77,6 +77,7 @@ The KAM Lead Management System is a comprehensive web-based platform designed fo
 #### 1. Clone the Repository
 ```bash
 git clone https://github.com/royaals/lead-management-system.git
+
 cd lead-management-system
 
 # Navigate to backend directory
