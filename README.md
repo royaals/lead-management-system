@@ -111,6 +111,12 @@ cd client
 # Install dependencies
 npm install
 
+# Create environment file
+cp .env.example .env
+
+# Configure environment variables
+VITE_REACT_APP_BACKEND_URL="http://localhost:3000"
+
 # run the development server
 npm run dev
 ```
