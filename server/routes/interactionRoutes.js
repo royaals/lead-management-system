@@ -1,31 +1,40 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
+// routes/interactionRoutes.js
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
 
-// Get pending calls - This should come before the /lead/:leadId route
+const router = express.Router();
+const prisma = new PrismaClient();
+
+// Get pending calls
 router.get('/pending', async (req, res) => {
     try {
         const { leads } = req.query;
-        let query = `
-            SELECT i.*, l.restaurant_name 
-            FROM interactions i
-            JOIN leads l ON i.lead_id = l.id
-            WHERE i.interaction_type = 'Call'
-            AND DATE(i.interaction_date) = CURDATE()
-        `;
-        
-        // Add lead filtering if leads parameter is present
-        if (leads) {
-            const leadIds = leads.split(',');
-            query += ` AND i.lead_id IN (${leadIds.map(() => '?').join(',')})`;
-        }
-        
-        query += ' ORDER BY i.interaction_date ASC';
-        
-        const [interactions] = await db.promise().query(
-            query,
-            leads ? leads.split(',') : []
-        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const interactions = await prisma.interaction.findMany({
+            where: {
+                interaction_type: 'CALL',
+                interaction_date: {
+                    equals: today
+                },
+                ...(leads && {
+                    lead_id: {
+                        in: leads.split(',').map(id => parseInt(id))
+                    }
+                })
+            },
+            include: {
+                lead: {
+                    select: {
+                        restaurant_name: true
+                    }
+                }
+            },
+            orderBy: {
+                interaction_date: 'asc'
+            }
+        });
         
         res.json(interactions);
     } catch (error) {
@@ -34,28 +43,29 @@ router.get('/pending', async (req, res) => {
     }
 });
 
-// Get recent interactions - This should also come before the /lead/:leadId route
+// Get recent interactions
 router.get('/recent', async (req, res) => {
     try {
         const { leads } = req.query;
-        let query = `
-            SELECT i.*, l.restaurant_name 
-            FROM interactions i
-            JOIN leads l ON i.lead_id = l.id
-        `;
         
-        // Add lead filtering if leads parameter is present
-        if (leads) {
-            const leadIds = leads.split(',');
-            query += ` WHERE i.lead_id IN (${leadIds.map(() => '?').join(',')})`;
-        }
-        
-        query += ' ORDER BY i.created_at DESC LIMIT 10';
-        
-        const [interactions] = await db.promise().query(
-            query,
-            leads ? leads.split(',') : []
-        );
+        const interactions = await prisma.interaction.findMany({
+            where: leads ? {
+                lead_id: {
+                    in: leads.split(',').map(id => parseInt(id))
+                }
+            } : undefined,
+            include: {
+                lead: {
+                    select: {
+                        restaurant_name: true
+                    }
+                }
+            },
+            orderBy: {
+                created_at: 'desc'
+            },
+            take: 10
+        });
         
         res.json(interactions);
     } catch (error) {
@@ -67,28 +77,140 @@ router.get('/recent', async (req, res) => {
 // Get all interactions for a lead
 router.get('/lead/:leadId', async (req, res) => {
     try {
-        const [interactions] = await db.promise().query(
-            'SELECT * FROM interactions WHERE lead_id = ?', 
-            [req.params.leadId]
-        );
+        const leadId = parseInt(req.params.leadId);
+        
+        const interactions = await prisma.interaction.findMany({
+            where: {
+                lead_id: leadId
+            },
+            orderBy: {
+                created_at: 'desc'
+            },
+            include: {
+                lead: {
+                    select: {
+                        restaurant_name: true
+                    }
+                }
+            }
+        });
+        
         res.json(interactions);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching lead interactions:', error);
+        res.status(500).json({ error: 'Failed to fetch lead interactions' });
     }
 });
 
 // Add a new interaction
 router.post('/', async (req, res) => {
-    const { lead_id, interaction_date, interaction_type, notes, follow_up_required } = req.body;
     try {
-        const [result] = await db.promise().query(
-            'INSERT INTO interactions (lead_id, interaction_date, interaction_type, notes, follow_up_required) VALUES (?, ?, ?, ?, ?)',
-            [lead_id, interaction_date, interaction_type, notes, follow_up_required]
-        );
-        res.status(201).json({ id: result.insertId, ...req.body });
+        const { lead_id, interaction_date, interaction_type, notes, follow_up_required } = req.body;
+
+        // Validate required fields
+        if (!lead_id || !interaction_date || !interaction_type) {
+            return res.status(400).json({ 
+                error: 'lead_id, interaction_date, and interaction_type are required' 
+            });
+        }
+
+        // Validate interaction type
+        const validInteractionTypes = ['CALL', 'VISIT', 'ORDER'];
+        const normalizedType = interaction_type.toUpperCase();
+        if (!validInteractionTypes.includes(normalizedType)) {
+            return res.status(400).json({ 
+                error: `Invalid interaction_type. Must be one of: ${validInteractionTypes.join(', ')}` 
+            });
+        }
+
+        const newInteraction = await prisma.interaction.create({
+            data: {
+                lead_id: parseInt(lead_id),
+                interaction_date: new Date(interaction_date),
+                interaction_type: normalizedType,
+                notes: notes || null,
+                follow_up_required: follow_up_required || false
+            },
+            include: {
+                lead: {
+                    select: {
+                        restaurant_name: true
+                    }
+                }
+            }
+        });
+
+        res.status(201).json(newInteraction);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error creating interaction:', error);
+        res.status(500).json({ 
+            error: 'Failed to create interaction',
+            details: error.message 
+        });
     }
 });
 
-module.exports = router;
+// Update an interaction
+router.put('/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { interaction_date, interaction_type, notes, follow_up_required } = req.body;
+
+        // Validate interaction type if provided
+        if (interaction_type) {
+            const validInteractionTypes = ['CALL', 'VISIT', 'ORDER'];
+            const normalizedType = interaction_type.toUpperCase();
+            if (!validInteractionTypes.includes(normalizedType)) {
+                return res.status(400).json({ 
+                    error: `Invalid interaction_type. Must be one of: ${validInteractionTypes.join(', ')}` 
+                });
+            }
+        }
+
+        const updatedInteraction = await prisma.interaction.update({
+            where: { id },
+            data: {
+                interaction_date: interaction_date ? new Date(interaction_date) : undefined,
+                interaction_type: interaction_type ? interaction_type.toUpperCase() : undefined,
+                notes: notes !== undefined ? notes : undefined,
+                follow_up_required: follow_up_required !== undefined ? follow_up_required : undefined
+            },
+            include: {
+                lead: {
+                    select: {
+                        restaurant_name: true
+                    }
+                }
+            }
+        });
+
+        res.json(updatedInteraction);
+    } catch (error) {
+        console.error('Error updating interaction:', error);
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: 'Interaction not found' });
+        }
+        res.status(500).json({ error: 'Failed to update interaction' });
+    }
+});
+
+// Delete an interaction
+router.delete('/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        
+        await prisma.interaction.delete({
+            where: { id }
+        });
+
+        res.json({ message: 'Interaction deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting interaction:', error);
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: 'Interaction not found' });
+        }
+        res.status(500).json({ error: 'Failed to delete interaction' });
+    }
+});
+
+export default router;

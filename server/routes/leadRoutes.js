@@ -1,28 +1,48 @@
-const express = require('express');
+// routes/leadRoutes.js
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+
 const router = express.Router();
-const db = require('../config/database');
+const prisma = new PrismaClient();
+
+// Utility function to validate status
+const validateStatus = (status) => {
+  const VALID_STATUSES = ['NEW', 'ACTIVE', 'INACTIVE'];
+  if (!status) return 'NEW';
+  const normalizedStatus = status.toUpperCase();
+  if (!VALID_STATUSES.includes(normalizedStatus)) {
+    throw new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
+  }
+  return normalizedStatus;
+};
 
 // Get all leads with optional search
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
-    let query = 'SELECT * FROM leads';
-    let params = [];
-
-    if (search) {
-      query = `
-        SELECT * FROM leads 
-        WHERE restaurant_name LIKE ? 
-        OR address LIKE ? 
-        OR contact_number LIKE ?
-        OR assigned_kam LIKE ?
-      `;
-      const searchParam = `%${search}%`;
-      params = [searchParam, searchParam, searchParam, searchParam];
-    }
-
-    query += ' ORDER BY created_at DESC';
-    const [leads] = await db.promise().query(query, params);
+    
+    const leads = await prisma.lead.findMany({
+      where: search ? {
+        OR: [
+          { restaurant_name: { contains: search, mode: 'insensitive' } },
+          { address: { contains: search, mode: 'insensitive' } },
+          { contact_number: { contains: search, mode: 'insensitive' } },
+          { assigned_kam: { contains: search, mode: 'insensitive' } },
+        ],
+      } : undefined,
+      orderBy: {
+        created_at: 'desc',
+      },
+      include: {
+        _count: {
+          select: {
+            contacts: true,
+            interactions: true,
+          },
+        },
+      },
+    });
+    
     res.json(leads);
   } catch (error) {
     console.error('Error fetching leads:', error);
@@ -30,64 +50,70 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Search leads (dedicated endpoint)
+// Search leads
 router.get('/search', async (req, res) => {
-    try {
-      const { query } = req.query;
-      
-      // Return empty array for empty search
-      if (!query || query.trim().length === 0) {
-        return res.json([]);
-      }
-  
-      const searchQuery = `
-        SELECT l.*, 
-          COUNT(DISTINCT c.id) as contact_count,
-          COUNT(DISTINCT i.id) as interaction_count,
-          MAX(i.created_at) as last_interaction
-        FROM leads l
-        LEFT JOIN contacts c ON l.id = c.lead_id
-        LEFT JOIN interactions i ON l.id = i.lead_id
-        WHERE 
-          l.restaurant_name LIKE ? OR
-          l.address LIKE ? OR
-          l.contact_number LIKE ? OR
-          l.assigned_kam LIKE ?
-        GROUP BY l.id
-        ORDER BY l.created_at DESC
-      `;
-  
-      const searchParam = `%${query.trim()}%`;
-      const [leads] = await db.promise().query(
-        searchQuery, 
-        [searchParam, searchParam, searchParam, searchParam]
-      );
-      
-      res.json(leads);
-    } catch (error) {
-      console.error('Error searching leads:', error);
-      res.status(500).json({ error: 'Failed to search leads' });
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim().length === 0) {
+      return res.json([]);
     }
-  });
+
+    const leads = await prisma.lead.findMany({
+      where: {
+        OR: [
+          { restaurant_name: { contains: query, mode: 'insensitive' } },
+          { address: { contains: query, mode: 'insensitive' } },
+          { contact_number: { contains: query, mode: 'insensitive' } },
+          { assigned_kam: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      include: {
+        _count: {
+          select: {
+            contacts: true,
+            interactions: true,
+          },
+        },
+        interactions: {
+          orderBy: {
+            created_at: 'desc',
+          },
+          take: 1,
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    res.json(leads);
+  } catch (error) {
+    console.error('Error searching leads:', error);
+    res.status(500).json({ error: 'Failed to search leads' });
+  }
+});
 
 // Get single lead by ID with related data
 router.get('/:id', async (req, res) => {
   try {
-    const queries = [
-      db.promise().query('SELECT * FROM leads WHERE id = ?', [req.params.id]),
-      db.promise().query('SELECT * FROM contacts WHERE lead_id = ?', [req.params.id]),
-      db.promise().query('SELECT * FROM interactions WHERE lead_id = ?', [req.params.id])
-    ];
+    const leadId = parseInt(req.params.id);
+    
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      include: {
+        contacts: true,
+        interactions: {
+          orderBy: {
+            created_at: 'desc',
+          },
+        },
+      },
+    });
 
-    const [[leads], [contacts], [interactions]] = await Promise.all(queries);
-
-    if (leads.length === 0) {
+    if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
     }
-
-    const lead = leads[0];
-    lead.contacts = contacts;
-    lead.interactions = interactions;
 
     res.json(lead);
   } catch (error) {
@@ -98,41 +124,78 @@ router.get('/:id', async (req, res) => {
 
 // Create a new lead
 router.post('/', async (req, res) => {
-  const { restaurant_name, address, contact_number, status, assigned_kam } = req.body;
-  
   try {
-    const [result] = await db.promise().query(
-      'INSERT INTO leads (restaurant_name, address, contact_number, status, assigned_kam) VALUES (?, ?, ?, ?, ?)',
-      [restaurant_name, address, contact_number, status || 'New', assigned_kam]
-    );
-    
-    const [newLead] = await db.promise().query('SELECT * FROM leads WHERE id = ?', [result.insertId]);
-    res.status(201).json(newLead[0]);
+    const { restaurant_name, address, contact_number, status, assigned_kam } = req.body;
+
+    // Validate required fields
+    if (!restaurant_name) {
+      return res.status(400).json({ error: 'Restaurant name is required' });
+    }
+
+    // Validate status
+    let validatedStatus;
+    try {
+      validatedStatus = validateStatus(status);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    const newLead = await prisma.lead.create({
+      data: {
+        restaurant_name,
+        address: address || null,
+        contact_number: contact_number || null,
+        status: validatedStatus,
+        assigned_kam: assigned_kam || null,
+      },
+    });
+
+    res.status(201).json(newLead);
   } catch (error) {
     console.error('Error creating lead:', error);
-    res.status(500).json({ error: 'Failed to create lead' });
+    res.status(500).json({ 
+      error: 'Failed to create lead',
+      details: error.message 
+    });
   }
 });
 
 // Update a lead
 router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { restaurant_name, address, contact_number, status, assigned_kam } = req.body;
-  
   try {
-    const [result] = await db.promise().query(
-      'UPDATE leads SET restaurant_name = ?, address = ?, contact_number = ?, status = ?, assigned_kam = ? WHERE id = ?',
-      [restaurant_name, address, contact_number, status, assigned_kam, id]
-    );
+    const leadId = parseInt(req.params.id);
+    const { restaurant_name, address, contact_number, status, assigned_kam } = req.body;
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Lead not found' });
+    // Validate required fields
+    if (!restaurant_name) {
+      return res.status(400).json({ error: 'Restaurant name is required' });
     }
 
-    const [updatedLead] = await db.promise().query('SELECT * FROM leads WHERE id = ?', [id]);
-    res.json(updatedLead[0]);
+    // Validate status
+    let validatedStatus;
+    try {
+      validatedStatus = validateStatus(status);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        restaurant_name,
+        address: address || null,
+        contact_number: contact_number || null,
+        status: validatedStatus,
+        assigned_kam: assigned_kam || null,
+      },
+    });
+
+    res.json(updatedLead);
   } catch (error) {
     console.error('Error updating lead:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
     res.status(500).json({ error: 'Failed to update lead' });
   }
 });
@@ -140,18 +203,20 @@ router.put('/:id', async (req, res) => {
 // Delete a lead
 router.delete('/:id', async (req, res) => {
   try {
-    const [result] = await db.promise().query('DELETE FROM leads WHERE id = ?', [req.params.id]);
+    const leadId = parseInt(req.params.id);
     
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Lead not found' });
-    }
-    
+    await prisma.lead.delete({
+      where: { id: leadId },
+    });
+
     res.json({ message: 'Lead deleted successfully' });
   } catch (error) {
     console.error('Error deleting lead:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
     res.status(500).json({ error: 'Failed to delete lead' });
   }
 });
 
-
-module.exports = router;
+export default router;

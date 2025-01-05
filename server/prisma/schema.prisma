@@ -1,0 +1,68 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id             Int           @id @default(autoincrement())
+  restaurant_name String       // Changed to snake_case for PostgreSQL convention
+  address        String?
+  contact_number String?
+  status         LeadStatus    @default(NEW)
+  assigned_kam   String?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  contacts       Contact[]
+  interactions   Interaction[]
+
+  @@map("leads")
+  @@index([restaurant_name])
+  @@index([status])
+}
+
+model Contact {
+  id            Int      @id @default(autoincrement())
+  lead_id       Int
+  name          String
+  role          String?
+  phone_number  String?
+  email         String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  lead          Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
+}
+
+model Interaction {
+  id                Int             @id @default(autoincrement())
+  lead_id          Int
+  interaction_date  DateTime
+  interaction_type  InteractionType
+  notes            String?
+  follow_up_required Boolean        @default(false)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  lead             Lead            @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@map("interactions")
+  @@index([lead_id])
+  @@index([interaction_date])
+}
+
+enum LeadStatus {
+  NEW
+  ACTIVE
+  INACTIVE
+}
+enum InteractionType {
+  CALL
+  VISIT
+  ORDER
+}

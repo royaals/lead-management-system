@@ -2,6 +2,7 @@ import React from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import { toast } from "react-hot-toast" // Add this import
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -60,7 +61,10 @@ export function AddContactDialog({ open, onOpenChange, leadId, onContactAdded }:
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!leadId) return
+    if (!leadId) {
+      toast.error('Lead ID is required');
+      return;
+    }
 
     try {
       const response = await fetch('http://localhost:3000/api/contacts', {
@@ -68,19 +72,28 @@ export function AddContactDialog({ open, onOpenChange, leadId, onContactAdded }:
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...values, lead_id: leadId }),
-      })
+        body: JSON.stringify({
+          lead_id: parseInt(leadId),
+          name: values.name,
+          role: values.role,
+          phone_number: values.phone_number,
+          email: values.email,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to add contact')
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add contact');
       }
 
-      onContactAdded()
-      onOpenChange(false)
-      form.reset()
+      const data = await response.json();
+      toast.success('Contact added successfully');
+      onContactAdded();
+      onOpenChange(false);
+      form.reset();
     } catch (error) {
-      console.error('Error adding contact:', error)
-      // You might want to show an error message to the user here
+      console.error('Error adding contact:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add contact');
     }
   }
 
@@ -165,4 +178,3 @@ export function AddContactDialog({ open, onOpenChange, leadId, onContactAdded }:
     </Dialog>
   )
 }
-
