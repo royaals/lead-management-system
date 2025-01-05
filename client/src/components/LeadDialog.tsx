@@ -1,24 +1,26 @@
-//@ts-nocheck
 
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Loader2 } from 'lucide-react'
-import { useToast } from "@/hooks/use-toast"
-
 import { Button } from "@/components/ui/button"
-import Header from '@/components/Header'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -26,10 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Lead } from '@/types/lead'
 
 const formSchema = z.object({
   restaurant_name: z.string().min(2, {
@@ -47,11 +46,13 @@ const formSchema = z.object({
   }),
 })
 
-export default function CreateLeadPage() {
-  const { toast } = useToast()
-  const navigate = useNavigate()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+interface AddLeadDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onLeadAdded: (lead: Lead) => void
+}
 
+export function AddLeadDialog({ open, onOpenChange, onLeadAdded }: AddLeadDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,7 +65,6 @@ export default function CreateLeadPage() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true)
     try {
       const response = await fetch('http://localhost:3000/api/leads', {
         method: 'POST',
@@ -74,39 +74,31 @@ export default function CreateLeadPage() {
         body: JSON.stringify(values),
       })
 
-      if (response.ok) {
-        toast({
-          title: "Lead created",
-          description: "New lead has been successfully added.",
-        })
-        navigate('/dashboard')
-      } else {
+      if (!response.ok) {
         throw new Error('Failed to add lead')
       }
+
+      const newLead = await response.json()
+      onLeadAdded(newLead)
+      onOpenChange(false)
+      form.reset()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create lead. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
+      console.error('Error adding lead:', error)
+      // You might want to show an error message to the user here
     }
   }
 
   return (
-    <>
-    <Header />
-    <div className="container mx-auto py-10">
-    
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Create New Lead</CardTitle>
-        <CardDescription>Add a new restaurant lead to the system.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add New Lead</DialogTitle>
+          <DialogDescription>
+            Enter the details of the new lead here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="restaurant_name"
@@ -116,9 +108,6 @@ export default function CreateLeadPage() {
                   <FormControl>
                     <Input placeholder="Enter restaurant name" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    The official name of the restaurant.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -130,15 +119,8 @@ export default function CreateLeadPage() {
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Enter restaurant address" 
-                      className="resize-none" 
-                      {...field} 
-                    />
+                    <Textarea placeholder="Enter address" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    The full address of the restaurant.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -152,9 +134,6 @@ export default function CreateLeadPage() {
                   <FormControl>
                     <Input placeholder="Enter contact number" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    The primary contact number for the restaurant.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -177,9 +156,6 @@ export default function CreateLeadPage() {
                       <SelectItem value="Inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    The current status of the lead.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -193,24 +169,17 @@ export default function CreateLeadPage() {
                   <FormControl>
                     <Input placeholder="Enter assigned KAM" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    The Key Account Manager assigned to this lead.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Creating..." : "Create Lead"}
-            </Button>
+            <DialogFooter>
+              <Button type="submit">Save Lead</Button>
+            </DialogFooter>
           </form>
         </Form>
-      </CardContent>
-    </Card>
-  </div>
-    </>
-    
+      </DialogContent>
+    </Dialog>
   )
 }
 

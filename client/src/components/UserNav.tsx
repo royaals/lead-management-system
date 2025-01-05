@@ -14,7 +14,7 @@ import {
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
   
-  export function UserNav() {
+  export default function UserNav() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
